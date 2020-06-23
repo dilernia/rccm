@@ -1,0 +1,28 @@
+Package: rcm
+Type: Package
+Title: Implemention of Random Covariance Models
+Version: 0.1.1
+Authors@R: as.person(c(
+    "Andrew DiLernia <andrew.s.dilernia@gmail.com> [aut, cre]", 
+    "Lin Zhang <zhan4800@umn.edu> [aut]"
+  ))
+Description: This package implements random covariance models for joint estimation 
+    of multiple sparse precision matrices for Gaussian graphical models. 
+    Methods implemented include the Random Covariance Model (RCM) and the
+    Random Covariance Clustering Model (RCCM). The RCM utilizes a 
+    Kullback-Leibler divergence penalty to induce similarity across matrices.
+    The RCCM is a penalized model-based clustering method for joint 
+    estimation of multiple sparse precision matrices which provides sparse
+    subject-level matrices, cluster-level matrices, and estimated cluster assignments.
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+Imports:
+    glasso,
+    mclust,
+    mvtnorm,
+    spcov,
+    JGL,
+    foreach,
+    doParallel
+RoxygenNote: 7.1.0

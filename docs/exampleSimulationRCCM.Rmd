@@ -1,0 +1,338 @@
+---
+title: "RCCM Example Simulation"
+author: ""
+date: ""
+output:
+  rmarkdown::html_document:
+    code_folding: show
+    toc: true
+    toc_float: true
+    theme: cerulean
+    highlight: kate
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align="center",
+                      message = F, warning = F)
+```
+
+This document walks through example simulation code used to produce the results obtained in 'Penalized model-based clustering of fMRI' submitted to the journal Biostatistics. First, we install and load the version of the R package used for the submitted manuscript:
+
+```{r, cache = F}
+# Install version of package used for Biostatistics submission
+if("rcm" %in% installed.packages() == FALSE) {
+devtools::install_github("dilernia/rcm@biostatistics")
+}
+
+# Load rcm package
+library(rcm)
+
+# Loading other packages
+library(tidyverse, quietly = T)
+library(kableExtra, quietly = T)
+```
+
+## Simulating Data {.tabset .tabset-fade}
+
+We simulate an example data set for $K=100$ total subjects belong to one of $G=2$ equally sized clusters which share roughly $20 \%$ of network connections. For each subject, we generate $n=177$ observations for $p=10$ variables with approximately $\rho = 10\%$ of network connections differing from their true cluster-level network. 
+
+```{r}
+# Display help file
+?rccSim
+
+# Simulate data
+set.seed(1994)
+G <- 2
+p <- 10
+myData <- rccSim(G = G, clustSize = 20, p = p, n = 177, overlap = 0.20, rho = 0.10)
+
+# Standardizing data
+myData$simDat <- lapply(myData$simDat, FUN = scale)
+```
+
+## Tuning Parameter Selection {.tabset .tabset-fade}
+
+We now select the optimal sets of tuning parameters for 3 different analysis approaches: our random covariance clustering model (RCCM), a Ward clustering \& group graphical lasso (GGL) approach, and a graphical lasso (GLasso) \& K-means clustering approach. The scale of which tuning parameters work best for each respective method vary, although in practice we've found that the optimal lasso penalty parameter for RCCM, $\lambda_1$, tends to be $\approx 100$ times the magnitude of what works well for GGL and GLasso. Similarly, we found that the optimal tuning parameter for RCCM that encourages similarity within clusters, denoted by $\lambda_2$, tends to be $\approx 5000$ times the magnitude of what works well for GGL when $p=10$, but this did vary by the number of variables. In other words, if $\lambda_1 = 50$ works well for RCCM for $p=10$, then $\lambda_1 = 0.50$ tends to work well for GLasso and GGL, and if $\lambda_2 = 5000$ works well for RCCM, then $\lambda_2 = 1$ works fairly well for GGL.
+
+### Modified stARS Algorithm
+
+#### RCCM
+
+```{r, echo = T, eval = T, cache = T}
+# Display help file
+?starsRccm
+
+# Grid of tuning parameters to search over
+lambdas <- expand.grid(lambda1 = c(1, 5, 15, 25, 35, 40), 
+                       lambda2 = c(1000, 3000, 5000), lambda3 = 20)
+
+# Find optimal tuning parameter set using modified stARS with 10 bootstrap samples
+optTune <- starsRccm(datf = myData$simDat, lambs = lambdas, G = G, N = 10, method = "RCCM")
+
+# Displaying results
+optTune %>% 
+  knitr::kable(digits = 3, row.names = F) %>% kable_styling(bootstrap_options = c("hover", "responsive"))
+```
+
+#### Ward & GGL
+
+```{r, echo = T, eval = T, cache = T}
+optWardggl <- starsRccm(datf = myData$simDat, lambs = lambdas, G = G, N = 10, method = "GGL")
+
+# Displaying results
+optWardggl %>% 
+  knitr::kable(digits = 3, row.names = F) %>% kable_styling(bootstrap_options = c("hover", "responsive"))
+```
+
+#### GLasso & K-means
+
+```{r, echo = T, eval = T, cache = T}
+optGL <- starsRccm(datf = myData$simDat, lambs = lambdas, G = G, N = 10, method = "GLasso")
+
+# Displaying results
+optGL %>% 
+  knitr::kable(digits = 3, row.names = F) %>% kable_styling(bootstrap_options = c("hover", "responsive"))
+```
+
+### Cross-Validation
+
+```{r, echo = T, eval = T, cache = T}
+# Display help file
+?cvTune
+
+# Grid of tuning parameters to search over
+lambdas <- expand.grid(lambda1 = c(1, 5, 15, 25, 35, 40), 
+                       lambda2 = c(1000, 3000, 5000), lambda3 = 20)
+
+# Find optimal tuning parameter set using 5-fold CV
+optTuneCV <- cvTune(x = myData$simDat, G = G, lambs = lambdas, 
+                    methods = c("RCCM", "GGL", "GLasso"), folds = 5)
+
+# Displaying selecting tuning parameters
+optTuneCV %>% 
+  knitr::kable(digits = 3, row.names = F) %>% kable_styling(bootstrap_options = c("hover", "responsive"))
+```
+
+## Analysis {.tabset .tabset-fade}
+
+We then analyze our simulated data set using the optimally selected tuning parameters for each method.
+
+### RCCM
+
+```{r}
+# Analyze with optimally selected tuning parameters for RCCM
+rccmResults <- lapply(X = c("stARS", "CV"), FUN = function(tune) {
+  
+if(tune == "stARS") {
+  lambda1 <- optTune$lambda1[1]
+  lambda2 <- optTune$lambda2[1]
+  lambda3 <- optTune$lambda3[1]
+} else {
+  lambda1 <- optTuneCV[which(optTuneCV$method == "RCCM"), ]$lambda1
+  lambda2 <- optTuneCV[which(optTuneCV$method == "RCCM"), ]$lambda2
+  lambda3 <- optTuneCV[which(optTuneCV$method == "RCCM"), ]$lambda3
+}
+  
+return(rccm(x = myData$simDat, lambda1 = lambda1, lambda2 = lambda2, lambda3 =lambda3, nclusts = G))})
+
+```
+
+### Ward & GGL
+
+```{r}
+# Using Ward & GGL approach
+
+# Function for calculating pair-wise Frob norm differences and then clustering
+MatClust <- function(mats, G) {
+  K <- dim(mats)[3]
+  combos <- expand.grid(s1 = 1:K, s2 = 1:K)
+  distMat <- matrix(NA, nrow = K, ncol = K)
+  for(r in 1:K) {
+    for(s in 1:K) {
+      distMat[r, s] <- norm(mats[, , r] - mats[, , s], type = 'F')
+    }
+  }
+
+  cl0 <- cutree(hclust(d = as.dist(distMat), method = "ward.D"), k = G)
+
+  wgk <- matrix(NA, nrow = G, ncol = K)
+
+  for(i in 1:G) {
+    for(j in 1:K) {
+      wgk[i, j] <- ifelse(cl0[j] == i, 1, 0)
+    }
+  }
+  return(wgk)
+}
+
+K <- length(myData$simDat)
+Sl <- sapply(myData$simDat, cov, simplify = "array")
+gl <- sapply(1:K, simplify = "array", FUN = function(x){glasso::glasso(Sl[, , x], rho = 0.001,
+                                                                       penalize.diagonal = FALSE)$wi})
+
+GGLResults <- lapply(X = c("stARS", "CV"), FUN = function(tune) {
+  
+lambda1 <- ifelse(tune == "stARS", optWardggl$lambda1[1], 
+                    optTuneCV[which(optTuneCV$method == "GGL"), ]$lambda1)
+
+lambda2 <- ifelse(tune == "stARS", optWardggl$lambda2[1], 
+                  optTuneCV[which(optTuneCV$method == "GGL"), ]$lambda2)
+  
+# Estimating cluster memberships using Ward clustering based on dissimilarity matrix of Frob norm differences
+GGLres <- list()
+GGLres$weights <- MatClust(gl, G = G)
+
+# Analyzing using GGL within each estimated cluster
+GGLres$res <- unlist(lapply(FUN = function(g) {
+  prec <- JGL::JGL(Y = myData$simDat[which(as.logical(GGLres$weights[g, ]))], penalty = "group",
+                   penalize.diagonal = FALSE, lambda1 = lambda1 / 100,
+                   lambda2 = lambda2 / 50000, return.whole.theta = TRUE)$theta
+  return(setNames(prec, c(which(as.logical(GGLres$weights[g, ])))))}, X = 1:G), recursive = F)
+
+GGLzHat <- apply(GGLres$weights, MARGIN = 2, FUN = which.max)
+
+# Estimated group-level network for GGL. Edge present if >= 50% of subjects have it in group
+  GGLres$Omegags <- array(NA, dim = c(p, p, G))
+  for(g in 1:G) {
+    GGLres$Omegags[, , g] <- round(apply(simplify2array(lapply(GGLres$res[which(GGLzHat == g)], FUN = adj)),
+                                  MARGIN = 1:2, FUN = mean))
+  }
+  
+  return(GGLres)})
+```
+
+### GLasso & K-means
+
+```{r}
+# Using GLasso & K-means clustering
+GLassoResults <- lapply(X = c("stARS", "CV"), FUN = function(tune) {
+GLassores <- list()
+
+lambda1 <- ifelse(tune == "stARS", optGL$lambda1[1], 
+                  optTuneCV[which(optTuneCV$method == "RCCM"), ]$lambda1)
+
+GLassores$res <- lapply(myData$simDat, FUN = function(x) {
+  glasso::glasso(cov(x), rho = lambda1 / 100, penalize.diagonal = FALSE)$wi})
+
+# Creating matrix of vectorized precision matrix estimates
+vMat <- do.call(rbind, lapply(X = GLassores$res, FUN = as.numeric))
+
+# Finding estimated cluster memberships using k-means clustering
+GLassores$weights <- as.integer(factor(kmeans(x = vMat, centers = G)$cluster, levels = c(1:G)))
+
+return(list(GLassores))})
+```
+
+## Results {.tabset .tabset-fade}
+
+We summarize the performance of each method using both tuning parameter selection approaches. For evaluating clustering performance, we calculate the the rand index (RI) and adjusted rand index (RIadj). For evaluating performance in terms of edge detection we calculate the true positive rate (TPR), false positive rate (FPR), precision, and F1 scores for the subject-level networks, subscripted with $k$, and cluster-level networks, subscripted with $g$. 
+
+```{r}
+# Function for summarizing edge detection performances
+performanceSummary <- function(Omegaks, Omegags, zs, Omega0ks = myData$Omegaks, Omega0gs = myData$Omega0s, z0s = myData$zgks) {
+
+# Calculating Rand indexes and adjusted rand indexes
+RI <- randCalc(zs, z0s)
+RIadj <- mclust::adjustedRandIndex(zs, z0s)
+
+# Calculating Precision Matrix Error, True Positive Rate, and False Positive Rates
+subjSum <- sum(sapply(1:K, FUN = function(k){sum((adj(Omegaks[, , k]) +
+                                                    adj(Omega0ks[, , k]))[lower.tri(Omega0ks[, , k], diag = FALSE)] == 2)}))
+posskEdges <- sum(sapply(1:K, FUN = function(k){sum(adj(Omega0ks[, , k])[lower.tri(Omega0ks[, , k], diag = FALSE)] == 1)}))
+
+TPRk <- subjSum / posskEdges
+subjSum0 <- sum(sapply(1:K, FUN = function(k){sum((-1*adj(Omegaks[, , k]) +
+                                                     adj(Omega0ks[, , k]))[lower.tri(Omega0ks[, , k], diag = FALSE)] == -1)}))
+possk0s <- sum(sapply(1:K, FUN = function(k){sum(adj(Omega0ks[, , k])[lower.tri(Omega0ks[, , k], diag = FALSE)] == 0)}))
+
+FPRk <- subjSum0 / possk0s
+
+PrecisionK <- subjSum / (subjSum + subjSum0)
+
+F1k <- 2*(PrecisionK*TPRk) / (PrecisionK + TPRk)
+
+if(is.null(Omegags) == FALSE) {
+  grpSum <- sum(sapply(1:G, FUN = function(g){sum((adj(Omegags[, , g]) +
+                                                     adj(Omega0gs[, , g]))[lower.tri(Omega0gs[, , g], diag = FALSE)] == 2)}))
+  possgEdges <- sum(sapply(1:G, FUN = function(g){sum(adj(Omega0gs[, , g])[lower.tri(Omega0gs[, , g], diag = FALSE)] == 1)}))
+  TPRg <- grpSum / possgEdges
+  grpSum0 <- sum(sapply(1:G, FUN = function(g){sum((-1*adj(Omegags[, , g]) +
+                                                      adj(Omega0gs[, , g]))[lower.tri(Omega0gs[, , g], diag = FALSE)] == -1)}))
+  possg0s <- sum(sapply(1:G, FUN = function(g){sum(adj(Omega0gs[, , g])[lower.tri(Omega0gs[, , g], diag = FALSE)] == 0)}))
+
+  PrecisionG <- grpSum / (grpSum + grpSum0)
+
+  F1g <- 2*(PrecisionG*TPRg) / (PrecisionG + TPRg)
+
+  FPRg <- grpSum0 / possg0s
+} else {
+  TPRg <- NA
+  FPRg <- NA
+  PrecisionG <- NA
+  F1g <- NA
+}
+
+return(data.frame(RI = RI, RIadj = RIadj, TPRk = TPRk, FPRk = FPRk,
+                  PrecisionK = PrecisionK, F1k = F1k,
+                  TPRg = TPRg, FPRg = FPRg, PrecisionG = PrecisionG, F1g = F1g))
+}
+
+```
+
+
+### stARS
+
+#### RCCM
+
+```{r}
+performanceSummary(Omegaks = rccmResults[[1]]$Omegas, Omegags =rccmResults[[1]]$Omega0, 
+                   zs = apply(rccmResults[[1]]$weights, FUN = which.max, MARGIN = 2)) %>% 
+  knitr::kable(digits = 3, row.names = F) %>% kable_styling(bootstrap_options = c("hover", "responsive"))
+```
+
+#### Ward & GGL
+
+```{r}
+performanceSummary(Omegaks = simplify2array(GGLResults[[1]]$res), Omegags = GGLResults[[1]]$Omegags, 
+                   zs = apply(GGLResults[[1]]$weights, FUN = which.max, MARGIN = 2)) %>% 
+  knitr::kable(digits = 3, row.names = F) %>% kable_styling(bootstrap_options = c("hover", "responsive"))
+```
+
+#### GLasso & K-means
+
+```{r}
+performanceSummary(Omegaks = simplify2array(GLassoResults[[1]][[1]]$res), 
+                   Omegags = NULL, zs = GLassoResults[[1]][[1]]$weights) %>% 
+  knitr::kable(digits = 3, row.names = F) %>% kable_styling(bootstrap_options = c("hover", "responsive"))
+```
+
+
+
+
+### 5-fold CV
+
+#### RCCM
+
+```{r}
+performanceSummary(Omegaks = rccmResults[[2]]$Omegas, Omegags =rccmResults[[2]]$Omega0, 
+                   zs = apply(rccmResults[[2]]$weights, FUN = which.max, MARGIN = 2)) %>% 
+  knitr::kable(digits = 3, row.names = F) %>% kable_styling(bootstrap_options = c("hover", "responsive"))
+```
+
+#### Ward & GGL
+
+```{r}
+performanceSummary(Omegaks = simplify2array(GGLResults[[2]]$res), Omegags = GGLResults[[2]]$Omegags, 
+                   zs = apply(GGLResults[[2]]$weights, FUN = which.max, MARGIN = 2)) %>% 
+  knitr::kable(digits = 3, row.names = F) %>% kable_styling(bootstrap_options = c("hover", "responsive"))
+```
+
+#### GLasso & K-means
+
+```{r}
+performanceSummary(Omegaks = simplify2array(GLassoResults[[2]][[1]]$res), 
+                   Omegags = NULL, zs = GLassoResults[[2]][[1]]$weights) %>% 
+  knitr::kable(digits = 3, row.names = F) %>% kable_styling(bootstrap_options = c("hover", "responsive"))
+```
+
+
