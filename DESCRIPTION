@@ -1,4 +1,4 @@
-Package: rcm
+Package: rccm
 Type: Package
 Title: Implemention of Random Covariance Models
 Version: 0.1.1
