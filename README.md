@@ -1,4 +1,4 @@
-# rcm
+# rccm
 
 Implemention of Random Covariance Models
 
