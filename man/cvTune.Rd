@@ -4,8 +4,13 @@
 \alias{cvTune}
 \title{Tuning Parameter Selection via Cross-Validation}
 \usage{
-cvTune(x, G, lambs, methods = c("RCCM", "GGL", "GLasso", "FGL", "RCM"),
-  folds = 5)
+cvTune(
+  x,
+  G,
+  lambs,
+  methods = c("RCCM", "GGL", "GLasso", "FGL", "RCM"),
+  folds = 5
+)
 }
 \arguments{
 \item{x}{List of \eqn{K} data matrices each of dimension \eqn{n_k} x \eqn{p}}

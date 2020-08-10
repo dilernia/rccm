@@ -4,12 +4,10 @@
 #' Data is generated in a hierarchical manner, beginning with group-level networks
 #' and precision matrices and then subject-level networks and matrices.
 #'
-#' For simulating data for hub type graphs, \eqn{G} cluster-level networks are first generated,
+#' For simulating data, \eqn{G} hub-type networks are first generated,
 #' each with floor(\eqn{\sqrt p})
-#' hubs and thus \eqn{E = p -} floor(\eqn{\sqrt p}) edges.  For generating random graphs,
-#' \eqn{G} cluster-level networks are generating such that nodes are connected
-#' with a probability specified by \eqn{eprob}, yielding approximately \eqn{E=} (\eqn{p} choose 2) \eqn{x eprob} edges.
-#' Cluster-level networks are forced
+#' hubs and thus \eqn{E = p -} floor(\eqn{\sqrt p}) edges, while
+#' simultaneously forcing these cluster-level networks
 #' to share \eqn{s =} floor(\eqn{overlap} x \eqn{E}) edges.
 #' Note that \eqn{overlap} represents the approximate proportion
 #' of edges that are common across the cluster-level networks.
@@ -29,7 +27,6 @@
 #' @param n Positive integer. Number of observations for each subject on each variable.
 #' @param overlap Positive number between 0 and 1. Approximate proportion of overlapping edges across cluster-level networks.
 #' @param rho Positive number between 0 and 1. Approximate proportion of differential edges for subjects compared to their corresponding cluster-level network.
-#' @param esd Standard deviation of mean 0 noise added to generated subject-level matrices for variation from the corresponding group-level matrix.
 #' @param type Graph type. Options are "hub" or "random".
 #' @param eprob Probability of two nodes having an edge between them. Only applicable if type = "random".
 #' @return A list of length 5 containing:
@@ -56,7 +53,7 @@
 #'
 #' @export
 rccSim <- function(G = 2, clustSize = c(67, 37), p = 10,
-                   n = 177, overlap = 0.50, rho = 0.10, esd = 0.05, type = "hub", eprob = 0.50) {
+                   n = 177, overlap = 0.50, rho = 0.10, type = "hub", eprob = 0.50) {
 
   # Calculating total number of subjects
   K <- ifelse(length(clustSize) == 1, G * clustSize, sum(clustSize))
@@ -68,7 +65,8 @@ rccSim <- function(G = 2, clustSize = c(67, 37), p = 10,
   Omegaks <- array(0, c(p, p, K))
   if(length(clustSize) != 1 & length(clustSize) != G) {
     stop("clustSize must be of length 1 or of length equal to the number of clusters")
-  } else {
+  }
+    else {
   if (length(clustSize) > 1) {
     zgks <- c()
     for (g in 1:length(clustSize)) {
@@ -86,13 +84,13 @@ rccSim <- function(G = 2, clustSize = c(67, 37), p = 10,
   J <- floor(sqrt(p))
 
   # Function for dividing entries by corresponding row sums to make positive definite
-  symmPosDef <- function(m) {
-    m <- m + t(m)
-    smallE <- min(eigen(m)$values)
-    if (smallE <= 0) {
-      m <- m + diag(rep(abs(smallE) + 0.10 + 0.10, times = nrow(m)))
+  symmPosDef <- function(m, rs = rowSums(g0s[, , g])) {
+    for (r in 1:nrow(m)) {
+      if (min(eigen(m + t(m))$values) <= 0) {
+        m[r, ] <- m[r, ] / max(c(rs[r], 2))
+      }
     }
-    return(m)
+    return(m + t(m))
   }
 
   # Determining edges to be shared across groups
@@ -110,8 +108,10 @@ rccSim <- function(G = 2, clustSize = c(67, 37), p = 10,
   while (min(apply(Omega0s, MARGIN = 3, FUN = function(x) {
     min(eigen(x)$values)})) <= 0) {
     for (g in 1:G) {
+      # Keeping cluster-level graphs constant across simulations
+      if (file.exists(paste0("graphs_p", p, "_over", overlap, "_G",
+                            G, balanced, "_", type, eprob, ".rds")) == FALSE) {
         g0s[, , g] <- matrix(0, nrow = p, ncol = p)
-
         if(type == "hub") {
           hubs <- split(sample.int(p, size = p, replace = FALSE), rep(1:J, ceiling(p / J))[1:p])
 
@@ -134,13 +134,22 @@ rccSim <- function(G = 2, clustSize = c(67, 37), p = 10,
         # Saving graphs to keep constant across simulations
         g0s[, , g] <- (g0s[, , g] + t(g0s[, , g]) > 0.001) + 0
 
+        if (g == G) {
+          saveRDS(g0s, paste0("graphs_p", p, "_over", overlap, "_G",
+                            G, balanced, "_", type, eprob, ".rds"))
+        }
+      } else {
+        g0s <- readRDS(paste0("graphs_p", p, "_over", overlap, "_G",
+                            G, balanced, "_", type, eprob, ".rds"))
+      }
+
       # Making graph triangular for precision matrix generation and storing row edge count
       g0s[, , g] <- (g0s[, , g] + t(g0s[, , g]) > 0.001) + 0
       rwSum <- rowSums(g0s[, , g])
       g0s[, , g][upper.tri(g0s[, , g], diag = T)] <- 0
 
       Omega0s[, , g] <- g0s[, , g] * matrix(runif(n = p * p, min = 0.50, max = 1) * sample(c(1, -1),
-                                                                                           size = p * p, replace = T), nrow = p, ncol = p)
+                                                                                     size = p * p, replace = T), nrow = p, ncol = p)
       if (g > 1) {
         for (e in 1:nrow(eShare)) {
           Omega0s[, , g][eShare[e, 1], eShare[e, 2]] <- Omega0s[, , g - 1][eShare[e, 1], eShare[e, 2]]
@@ -148,7 +157,8 @@ rccSim <- function(G = 2, clustSize = c(67, 37), p = 10,
       }
 
       # Making matrix symmetric and positive definite
-      Omega0s[, , g] <- symmPosDef(Omega0s[, , g])
+      Omega0s[, , g] <- symmPosDef(Omega0s[, , g], rs = rwSum)
+      diag(Omega0s[, , g]) <- 1
 
       # Making graph full again, not just lower triangular
       g0s[, , g] <- g0s[, , g] + t(g0s[, , g])
@@ -165,16 +175,15 @@ rccSim <- function(G = 2, clustSize = c(67, 37), p = 10,
                                                                                     diag = FALSE)]
 
       # Forcing subject-level matrix to have similar value as group-level matrix
-      Omegaks[, , k] <- gks[, , k] * (Omega0s[, , zgks[k]] + matrix(rnorm(n = p * p, sd = esd),
-                                                                    nrow = p, ncol = p))
+      Omegaks[, , k] <- gks[, , k] * (Omega0s[, , zgks[k]] + matrix(rnorm(n = p * p, sd = 0.05),
+                                                                  nrow = p, ncol = p))
 
-
-      # Changing edge presence for floor(rho * E) pairs of vertices from group-level graph
+      # Changing edge presence for floor(0.10 * E) pairs of vertices from group-level graph
       if (floor(rho * sum(gks[, , k])) > 0) {
-        # Determining which %rho*100 of node pairs to change edge presence for
+        # Determining which %10 of node pairs to change edge presence for
         swaps <- matrix(which(lower.tri(matrix(1, p, p), diag = F),
                               arr.ind = TRUE)[sample(1:(p * (p - 1) / 2),
-                              size = floor(rho * sum(gks[, , k]))), ], ncol = 2)
+                                                     size = floor(rho * sum(gks[, , k]))), ], ncol = 2)
 
         for (s in 1:nrow(swaps)) {
           gks[, , k][swaps[s, 1], swaps[s, 2]] <- abs(gks[, , k][swaps[s, 1], swaps[s, 2]] - 1)
@@ -188,6 +197,7 @@ rccSim <- function(G = 2, clustSize = c(67, 37), p = 10,
 
       # Making matrix symmetric and positive definite
       Omegaks[, , k] <- symmPosDef(Omegaks[, , k])
+      diag(Omegaks[, , k]) <- 1
     }
   }
   for (k in 1:K) {

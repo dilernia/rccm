@@ -6,9 +6,9 @@
 #' @param x List of \eqn{K} data matrices each of dimension \eqn{n_k} x \eqn{p}
 #' @param gMax Maximum number of clusters or groups to consider. Must be at least 2.
 #' @param B Number of reference data sets to generate.
-#' @param zs \eqn{K} x \eqn{gMax} - 1 matrix with estimated cluster memberships for
+#' @param zs \eqn{K} x \eqn{gMax} matrix with estimated cluster memberships for
 #' each number of clusters considered.
-#' @param optLambdas Data frame with 4 columns (lambda1, lambda2, lambda3, and \eqn{G}) and \eqn{gMax} - 1 rows. The first 3 columns
+#' @param optLambdas Data frame with 4 columns (lambda1, lambda2, lambda3, and \eqn{G}). The first 3 columns
 #' are the tuning parameter values to implement the RCCM for a given number of clusters, and
 #' the \eqn{G} column is the number of clusters that must range from 2 to \eqn{gMax}
 #' @param ncores Number of computing cores to use if desired to run in parallel. Optional.
@@ -16,7 +16,7 @@
 #' \enumerate{
 #' \item The optimally selected number of clusters (nclusts).
 #' \item The \eqn{gMax} observed Gap statistics (gaps).
-#' \item The \eqn{gMax} adjusted standard deviations of the simulated gap statistics (sigmas).
+#' \item The \eqn{gMax-1} adjusted standard deviations of the simulated gap statistics (sigmas).
 #' }
 #'
 #' @author

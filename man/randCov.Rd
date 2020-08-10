@@ -48,5 +48,5 @@ Zhang, Lin, Andrew DiLernia, Karina Quevedo, Jazmin Camchong, Kelvin Lim, and We
 "A Random Covariance Model for Bi-level Graphical Modeling with Application to Resting-state FMRI Data." 2019. https://arxiv.org/pdf/1910.00103.pdf
 }
 \author{
-Lin Zhang
+Lin Zhang and Andrew DiLernia
 }

@@ -5,8 +5,7 @@
 \title{Simulation of Data for RCCM}
 \usage{
 rccSim(G = 2, clustSize = c(67, 37), p = 10, n = 177,
-  overlap = 0.5, rho = 0.1, esd = 0.05, type = "hub",
-  eprob = 0.5)
+  overlap = 0.5, rho = 0.1, type = "hub", eprob = 0.50)
 }
 \arguments{
 \item{G}{Positive integer. Number of groups or clusters.}
@@ -20,9 +19,7 @@ rccSim(G = 2, clustSize = c(67, 37), p = 10, n = 177,
 \item{overlap}{Positive number between 0 and 1. Approximate proportion of overlapping edges across cluster-level networks.}
 
 \item{rho}{Positive number between 0 and 1. Approximate proportion of differential edges for subjects compared to their corresponding cluster-level network.}
-
-\item{esd}{Standard deviation of mean 0 noise added to generated subject-level matrices for variation from the corresponding group-level matrix.}
-
+  
 \item{type}{Graph type. Options are "hub" or "random".}
 
 \item{eprob}{Probability of two nodes having an edge between them. Only applicable if type = "random".}
@@ -43,12 +40,10 @@ Data is generated in a hierarchical manner, beginning with group-level networks
 and precision matrices and then subject-level networks and matrices.
 }
 \details{
-For simulating data for hub type graphs, \eqn{G} cluster-level networks are first generated,
+For simulating data, \eqn{G} hub-type networks are first generated,
 each with floor(\eqn{\sqrt p})
-hubs and thus \eqn{E = p -} floor(\eqn{\sqrt p}) edges.  For generating random graphs,
-\eqn{G} cluster-level networks are generating such that nodes are connected
-with a probability specified by \eqn{eprob}, yielding approximately \eqn{E=} (\eqn{p} choose 2) \eqn{x eprob} edges.
-Cluster-level networks are forced
+hubs and thus \eqn{E = p -} floor(\eqn{\sqrt p}) edges, while
+simultaneously forcing these cluster-level networks
 to share \eqn{s =} floor(\eqn{overlap} x \eqn{E}) edges.
 Note that \eqn{overlap} represents the approximate proportion
 of edges that are common across the cluster-level networks.

@@ -1,7 +1,7 @@
-Package: rccm
+Package: rcm
 Type: Package
 Title: Implemention of Random Covariance Models
-Version: 0.1.1
+Version: 0.1.0
 Authors@R: as.person(c(
     "Andrew DiLernia <andrew.s.dilernia@gmail.com> [aut, cre]", 
     "Lin Zhang <zhan4800@umn.edu> [aut]"
@@ -25,4 +25,4 @@ Imports:
     JGL,
     foreach,
     doParallel
-RoxygenNote: 7.1.0
+RoxygenNote: 7.0.2

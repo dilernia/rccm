@@ -15,7 +15,7 @@
 #' \item \eqn{p} x \eqn{p} x \eqn{K} array of \eqn{K} subject-level precision matrix estimates (Omegas).
 #' }
 #' @author
-#' Lin Zhang
+#' Lin Zhang and Andrew DiLernia
 #'
 #' @examples
 #' # Generate data with 5 subjects, 15 variables for each subject,
@@ -150,7 +150,7 @@ randCov <- function(x, lambda1, lambda2, lambda3 = 0,
 
     sk <- sapply(Sl, function(x1) (solve(Omega0) * lambda2 / K + x1) / (1 + lambda2 / K), simplify = FALSE)
     for (k in 1:K) {
-      Omegas[, , k] <- glasso::glasso(sk[[k]], rho, penalize.diagonal = TRUE)$wi
+      Omegas[, , k] <- glasso::glasso(sk[[k]], rho, penalize.diagonal = FALSE)$wi
     }
 
     # 2nd step:

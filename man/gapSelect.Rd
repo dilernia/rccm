@@ -13,10 +13,10 @@ gapSelect(x, gMax, B = 100, zs, optLambdas, ncores = 1)
 
 \item{B}{Number of reference data sets to generate.}
 
-\item{zs}{\eqn{K} x \eqn{gMax} - 1 matrix with estimated cluster memberships for
+\item{zs}{\eqn{K} x \eqn{gMax} matrix with estimated cluster memberships for
 each number of clusters considered.}
 
-\item{optLambdas}{Data frame with 4 columns (lambda1, lambda2, lambda3, and \eqn{G}) and \eqn{gMax} - 1 rows. The first 3 columns
+\item{optLambdas}{Data frame with 4 columns (lambda1, lambda2, lambda3, and \eqn{G}). The first 3 columns
 are the tuning parameter values to implement the RCCM for a given number of clusters, and
 the \eqn{G} column is the number of clusters that must range from 2 to \eqn{gMax}}
 
@@ -26,8 +26,8 @@ the \eqn{G} column is the number of clusters that must range from 2 to \eqn{gMax
 A list of length 3 containing:
 \enumerate{
 \item The optimally selected number of clusters (nclusts).
-\item The \eqn{gMax} observed Gap statistics (gaps).
-\item The \eqn{gMax} adjusted standard deviations of the simulated gap statistics (sigmas).
+\item The \eqn{gMax-1} observed Gap statistics (gaps).
+\item The \eqn{gMax-1} adjusted standard deviations of the simulated gap statistics (sigmas).
 }
 }
 \description{

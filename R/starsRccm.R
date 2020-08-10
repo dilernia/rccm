@@ -15,7 +15,7 @@
 #' @param beta Positive scalar between 0 and 1. Limits allowed amount of instability across subsamples.
 #' @param z0s Vector of length \eqn{K} with initial cluster memberships. Only applicable if method = "RCCM".
 #' @param ncores Number of computing cores to use if desired to run in parallel. Optional.
-#' @return A data frame of optimally selected tuning parameter values and the sparsity level with four columns: lambda1, lambda2, lambda3, and sparsity.
+#' @return A data frame of optimally selected tuning parameter values and the sparsity level with three columns: lambda1, lambda2, lambda3, and sparsity.
 #'
 #' @author
 #' Andrew DiLernia

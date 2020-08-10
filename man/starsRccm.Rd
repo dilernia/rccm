@@ -25,7 +25,7 @@ starsRccm(datf, lambs, method = "RCCM", G = 2, N = 10, beta = 0.05,
 \item{ncores}{Number of computing cores to use if desired to run in parallel. Optional.}
 }
 \value{
-A data frame of optimally selected tuning parameter values and the sparsity level with four columns: lambda1, lambda2, lambda3, and sparsity.
+A data frame of optimally selected tuning parameter values and the sparsity level with three columns: lambda1, lambda2, lambda3, and sparsity.
 }
 \description{
 This function implements a modified stability approach for

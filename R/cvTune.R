@@ -90,13 +90,6 @@ nllikCalc <- function(omegaks, datf) {
 #' @export
 cvTune <- function(x, G, lambs, methods = c("RCCM", "GGL", "GLasso", "FGL", "RCM"), folds = 5) {
 
-  # Cleaning column names
-  colnames(lambs)[1:3] <- tolower(colnames(lambs)[1:3])
-
-  if(all.equal(colnames(lambs), c("lambda1", "lambda2", "lambda3")) == FALSE) {
-    stop("lambs must be a data frame with columns lambda1, lambda2, and lambda3")
-  }
-
   # Number of subjects and tuning parameter combinations
   K <- length(x)
   J <- nrow(lambs)
