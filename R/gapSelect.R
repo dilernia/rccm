@@ -132,7 +132,7 @@ gapSelect <- function(x, gMax, B = 100, zs, optLambdas, ncores = 1) {
 
           # Analyzing with varying number of clusters
           for(g in 2:gMax) {
-            res <- rcm::rccm(x = refDats, lambda1 = optLambdas$lambda1[g - 1],
+            res <- rccm::rccm(x = refDats, lambda1 = optLambdas$lambda1[g - 1],
                              lambda2 = optLambdas$lambda2[g - 1], lambda3 = optLambdas$lambda3[g - 1],
                              nclusts = g)
 
@@ -191,7 +191,7 @@ gapSelect <- function(x, gMax, B = 100, zs, optLambdas, ncores = 1) {
 
           # Analyzing with varying number of clusters
           for(g in 2:gMax) {
-            res <- rcm::rccm(x = refDats, lambda1 = optLambdas$lambda1[g - 1],
+            res <- rccm::rccm(x = refDats, lambda1 = optLambdas$lambda1[g - 1],
                              lambda2 = optLambdas$lambda2[g - 1], lambda3 = optLambdas$lambda3[g - 1],
                              nclusts = g)
 
