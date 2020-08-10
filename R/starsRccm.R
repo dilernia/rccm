@@ -5,7 +5,7 @@
 #' selection. Methods available to implement include the
 #' fused graphical lasso (\link[JGL:JGL]{FGL}), group graphical lasso (\link[JGL:JGL]{GGL}),
 #' graphical lasso (\link[glasso:glasso]{GLasso}), random covariance clustering
-#' model (\link[rcm:rccm]{RCCM}), and the random covariance model (\link[rcm:randCov]{RCM}).
+#' model (\link[rccm:rccm]{RCCM}), and the random covariance model (\link[rccm:randCov]{RCM}).
 #'
 #' @param datf List of \eqn{K} data sets each of dimension \eqn{n_k} x \eqn{p}.
 #' @param lambs A data frame of candidate tuning parameter values with three columns: lambda1, lambda2, and lambda3.
@@ -142,7 +142,7 @@ starsRccm <- function(datf, lambs, method = "RCCM", G = 2, N = 10,
       nets <- lapply(1:nrow(lambs), FUN = function(t) {
         tryCatch({
           if (method == "RCCM") {
-            arrayRes <- rcm::rccm(subDats, lambda1 = lambs[t, "lambda1"], lambda2 = lambs[t, "lambda2"],
+            arrayRes <- rccm::rccm(subDats, lambda1 = lambs[t, "lambda1"], lambda2 = lambs[t, "lambda2"],
                              lambda3 = lambs[t, "lambda3"], nclusts = G, z0s = z0s)$Omegas
             listRes <- lapply(lapply(1:K, FUN = function(k) {
               arrayRes[, , k]}), FUN = adj)
@@ -157,7 +157,7 @@ starsRccm <- function(datf, lambs, method = "RCCM", G = 2, N = 10,
                                        lambda2 = lambs[t, "lambda2"] / 50 / 1000,
                                        return.whole.theta = TRUE)$theta, FUN = adj)
           } else if (method == "RCM") {
-            arrayRes <- randCov(x = subDats, lambda1 = lambs[t, "lambda1"] / 100,
+            arrayRes <- rccm::randCov(x = subDats, lambda1 = lambs[t, "lambda1"] / 100,
                                            lambda2 = lambs[t, "lambda2"] / 50,
                                            lambda3 = lambs[t, "lambda3"] / 100000)$Omegas
             listRes <- lapply(lapply(1:K, FUN = function(k) {
