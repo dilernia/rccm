@@ -13,7 +13,6 @@ This R package implements methods for clustering and joint estimation of multipl
   - [Overview of main functions](#overview-main)
   - [Installation](#install)
   - [Examples](#examples)
-  - [Simulation Demo](#demo)
   - [References](#refs)
 
 <h2 id="overview-main">
@@ -98,7 +97,7 @@ Examples
 
 </h2>
 
-Here we walk through brief examples of using some key functions. For a more detailed simulation example for implementing the **RCCM**, see this <a href="https://dilernia.github.io/rcm/exampleSimulationRCCM.html">link</a>. For a detailed simulation example for implementing the Random Covariance Model (**RCM**), see this <a href="https://dilernia.github.io/rcm/exampleSimulationRCM.html">link</a>.
+Here we walk through brief examples of using some key functions. For a more detailed simulation example for implementing the **RCCM**, see this <a href="https://dilernia.github.io/rccm/exampleSimulationRCCM_HighMag.html">link</a> for a simulation with precision matrices with higher magnitude entries, and this <a href="https://dilernia.github.io/rccm/exampleSimulationRCCM_LowMag.html">link</a> for a simulation with low magnitude entries.
 
 ### Analyzing single data set
 
@@ -224,14 +223,6 @@ Below we generate a single data set with 2 clusters with 10 subjects in each gro
     
     clustRes
 
-<h2 id="demo">
-
-Simulation Demo
-
-</h2>
-
-For a detailed simulation example for implementing the Random Covariance Clustering Model (**RCCM**), see this <a href="https://dilernia.github.io/rccm/exampleSimulationRCCM_HighMag.html">link</a> for a simulation with precision matrices with higher magnitude entries, and this <a href="https://dilernia.github.io/rccm/exampleSimulationRCCM_LowMag.html">link</a> for a simulation with low magnitude entries.
-
 <h2 id="refs">
 
 References
@@ -244,4 +235,4 @@ Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse covariance est
 
 Tibshirani, R., Walther, G., & Hastie, T. (2001). Estimating the number of clusters in a data set via the gap statistic. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 63(2), 411-423.
 
-Zhang, L., DiLernia, A., Quevedo, K., Camchong, J., Lim, K., & Pan, W. (2019). A random covariance model for bi-level graphical modeling with application to resting-state fMRI data.
+Zhang, L., DiLernia, A., Quevedo, K., Camchong, J., Lim, K., & Pan, W. (2020). A random covariance model for bi‐level graphical modeling with application to resting‐state fMRI data. Biometrics.
