@@ -13,6 +13,7 @@ This R package implements methods for clustering and joint estimation of multipl
   - [Overview of main functions](#overview-main)
   - [Installation](#install)
   - [Examples](#examples)
+  - [Simulation Demo](#demo)
   - [References](#refs)
 
 <h2 id="overview-main">
@@ -222,6 +223,14 @@ Below we generate a single data set with 2 clusters with 10 subjects in each gro
     optLambdas = optLambdas)
     
     clustRes
+
+<h2 id="demo">
+
+Simulation Demo
+
+</h2>
+
+For a detailed simulation example for implementing the Random Covariance Clustering Model (**RCCM**), see this <a href="https://dilernia.github.io/rccm/exampleSimulationRCCM_HighMag.html">link</a> for a simulation with precision matrices with higher magnitude entries, and this <a href="https://dilernia.github.io/rccm/exampleSimulationRCCM_LowMag.html">link</a> for a simulation with low magnitude entries.
 
 <h2 id="refs">
 
