@@ -1700,10 +1700,10 @@ div.tocify {
 </div>
 
 
-<p>This document walks through example simulation code used to produce the results obtained in ‘Penalized model-based clustering of fMRI’ submitted to the journal Biostatistics when generating data from the low magnitude setting. First, we install and load the version of the R package used for the submitted manuscript:</p>
+<p>This document walks through example simulation code used to produce the results obtained in ‘Penalized model-based clustering of fMRI’ submitted to the journal Biostatistics when generating data from the high magnitude setting. First, we install and load the version of the R package used for the submitted manuscript:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="co"># Install version of package used for Biostatistics submission</span></a>
 <a class="sourceLine" id="cb1-2" title="2"><span class="cf">if</span>(<span class="st">&quot;rccm&quot;</span> <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>() <span class="op">==</span><span class="st"> </span><span class="ot">FALSE</span>) {</a>
-<a class="sourceLine" id="cb1-3" title="3">devtools<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;dilernia/rccm@biostatistics&quot;</span>)</a>
+<a class="sourceLine" id="cb1-3" title="3">devtools<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;dilernia/rccm&quot;</span>)</a>
 <a class="sourceLine" id="cb1-4" title="4">}</a>
 <a class="sourceLine" id="cb1-5" title="5"></a>
 <a class="sourceLine" id="cb1-6" title="6"><span class="co"># Load rcm package</span></a>
@@ -1739,10 +1739,10 @@ div.tocify {
 <a class="sourceLine" id="cb3-3" title="3"></a>
 <a class="sourceLine" id="cb3-4" title="4"><span class="co"># Grid of tuning parameters to search over</span></a>
 <a class="sourceLine" id="cb3-5" title="5">lambdas &lt;-<span class="st"> </span><span class="kw">expand.grid</span>(<span class="dt">lambda1 =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">15</span>, <span class="dv">25</span>, <span class="dv">35</span>, <span class="dv">40</span>), </a>
-<a class="sourceLine" id="cb3-6" title="6">                       <span class="dt">lambda2 =</span> <span class="kw">c</span>(<span class="dv">1000</span>, <span class="dv">3000</span>, <span class="dv">5000</span>), <span class="dt">lambda3 =</span> <span class="dv">20</span>)</a>
+<a class="sourceLine" id="cb3-6" title="6">                       <span class="dt">lambda2 =</span> <span class="kw">c</span>(<span class="dv">1000</span>, <span class="dv">3000</span>, <span class="dv">5000</span>), <span class="dt">lambda3 =</span> <span class="dv">5</span>)</a>
 <a class="sourceLine" id="cb3-7" title="7"></a>
 <a class="sourceLine" id="cb3-8" title="8"><span class="co"># Find optimal tuning parameter set using modified stARS with 10 bootstrap samples</span></a>
-<a class="sourceLine" id="cb3-9" title="9">optTune &lt;-<span class="st"> </span><span class="kw">starsRccm</span>(<span class="dt">datf =</span> myData<span class="op">$</span>simDat, <span class="dt">lambs =</span> lambdas, <span class="dt">G =</span> G, <span class="dt">N =</span> <span class="dv">10</span>, <span class="dt">method =</span> <span class="st">&quot;RCCM&quot;</span>)</a>
+<a class="sourceLine" id="cb3-9" title="9">optTune &lt;-<span class="st"> </span><span class="kw">starsRccm</span>(<span class="dt">datf =</span> myData<span class="op">$</span>simDat, <span class="dt">lambs =</span> lambdas, <span class="dt">G =</span> <span class="dv">2</span>, <span class="dt">N =</span> <span class="dv">10</span>, <span class="dt">method =</span> <span class="st">&quot;RCCM&quot;</span>)</a>
 <a class="sourceLine" id="cb3-10" title="10"></a>
 <a class="sourceLine" id="cb3-11" title="11"><span class="co"># Displaying results</span></a>
 <a class="sourceLine" id="cb3-12" title="12">optTune <span class="op">%&gt;%</span><span class="st"> </span></a>
@@ -1767,16 +1767,16 @@ sparsity
 <tbody>
 <tr>
 <td style="text-align:right;">
-25
+35
 </td>
 <td style="text-align:right;">
-3000
+1000
 </td>
 <td style="text-align:right;">
-20
+5
 </td>
 <td style="text-align:right;">
-0.804
+0.737
 </td>
 </tr>
 </tbody>
@@ -1812,13 +1812,13 @@ sparsity
 25
 </td>
 <td style="text-align:right;">
-1000
+5000
 </td>
 <td style="text-align:left;">
 NA
 </td>
 <td style="text-align:right;">
-0.975
+0.733
 </td>
 </tr>
 </tbody>
@@ -1860,7 +1860,7 @@ NA
 NA
 </td>
 <td style="text-align:right;">
-0.972
+0.739
 </td>
 </tr>
 </tbody>
@@ -1906,7 +1906,7 @@ method
 <tbody>
 <tr>
 <td style="text-align:right;">
-5
+1
 </td>
 <td style="text-align:right;">
 5000
@@ -1915,7 +1915,7 @@ method
 20
 </td>
 <td style="text-align:right;">
-14045.97
+9423.146
 </td>
 <td style="text-align:left;">
 GGL
@@ -1923,7 +1923,7 @@ GGL
 </tr>
 <tr>
 <td style="text-align:right;">
-15
+5
 </td>
 <td style="text-align:right;">
 1000
@@ -1932,7 +1932,7 @@ GGL
 20
 </td>
 <td style="text-align:right;">
-14085.18
+9465.032
 </td>
 <td style="text-align:left;">
 GLasso
@@ -1949,7 +1949,7 @@ GLasso
 20
 </td>
 <td style="text-align:right;">
-13943.70
+9354.164
 </td>
 <td style="text-align:left;">
 RCCM
@@ -2167,25 +2167,25 @@ F1g
 1
 </td>
 <td style="text-align:right;">
-0.428
+0.155
 </td>
 <td style="text-align:right;">
-0.336
+0.582
 </td>
 <td style="text-align:right;">
-0.503
+0.736
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-0.662
+0.257
 </td>
 <td style="text-align:right;">
-0.246
+0.457
 </td>
 <td style="text-align:right;">
-0.395
+0.627
 </td>
 </tr>
 </tbody>
@@ -2243,25 +2243,25 @@ F1g
 1
 </td>
 <td style="text-align:right;">
-0.097
+0.1
 </td>
 <td style="text-align:right;">
-0.69
+0.684
 </td>
 <td style="text-align:right;">
-0.816
+0.812
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-0.068
+0.108
 </td>
 <td style="text-align:right;">
-0.762
+0.667
 </td>
 <td style="text-align:right;">
-0.865
+0.8
 </td>
 </tr>
 </tbody>
@@ -2474,25 +2474,25 @@ F1g
 1
 </td>
 <td style="text-align:right;">
-0.428
+0.795
 </td>
 <td style="text-align:right;">
-0.335
+0.214
 </td>
 <td style="text-align:right;">
-0.502
+0.352
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-0.324
+0.959
 </td>
 <td style="text-align:right;">
-0.4
+0.184
 </td>
 <td style="text-align:right;">
-0.571
+0.311
 </td>
 </tr>
 </tbody>
