@@ -142,7 +142,7 @@ starsRccm <- function(datf, lambs, method = "RCCM", G = 2, N = 10,
       nets <- lapply(1:nrow(lambs), FUN = function(t) {
         tryCatch({
           if (method == "RCCM") {
-            arrayRes <- rcm::rccm(subDats, lambda1 = lambs[t, "lambda1"], lambda2 = lambs[t, "lambda2"],
+            arrayRes <- rccm::rccm(subDats, lambda1 = lambs[t, "lambda1"], lambda2 = lambs[t, "lambda2"],
                              lambda3 = lambs[t, "lambda3"], nclusts = G, z0s = z0s)$Omegas
             listRes <- lapply(lapply(1:K, FUN = function(k) {
               arrayRes[, , k]}), FUN = adj)

@@ -1,6 +1,10 @@
 {
-    "path" : "C:/Users/Owner/Dropbox/Minnesota/fMRI Research/rccm",
+    "path" : "C:/Users/Owner/Dropbox/Minnesota/fMRI Research/rccm/R",
     "sortOrder" : [
+        {
+            "ascending" : false,
+            "columnIndex" : 3
+        },
         {
             "ascending" : true,
             "columnIndex" : 2

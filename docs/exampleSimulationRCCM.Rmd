@@ -20,12 +20,12 @@ This document walks through example simulation code used to produce the results 
 
 ```{r, cache = F}
 # Install version of package used for Biostatistics submission
-if("rcm" %in% installed.packages() == FALSE) {
-devtools::install_github("dilernia/rcm@biostatistics")
+if("rccm" %in% installed.packages() == FALSE) {
+devtools::install_github("dilernia/rccm@biostatistics")
 }
 
 # Load rcm package
-library(rcm)
+library(rccm)
 
 # Loading other packages
 library(tidyverse, quietly = T)
@@ -34,7 +34,7 @@ library(kableExtra, quietly = T)
 
 ## Simulating Data {.tabset .tabset-fade}
 
-We simulate an example data set for $K=100$ total subjects belong to one of $G=2$ equally sized clusters which share roughly $20 \%$ of network connections. For each subject, we generate $n=177$ observations for $p=10$ variables with approximately $\rho = 10\%$ of network connections differing from their true cluster-level network. 
+We simulate an example data set for $K=40$ total subjects belong to one of $G=2$ equally sized clusters which share roughly $20 \%$ of network connections. For each subject, we generate $n=177$ observations for $p=10$ variables with approximately $\rho = 10\%$ of network connections differing from their true cluster-level network. 
 
 ```{r}
 # Display help file
