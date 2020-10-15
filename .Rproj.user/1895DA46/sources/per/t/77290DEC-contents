@@ -47,9 +47,18 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
   Sl <- sapply(x, cov, simplify = "array")
   nks <- sapply(x, nrow)
 
+
+  iSl <- sapply(1:K, simplify = "array", FUN = function(k) {
+    pMat <- solve(Sl[, , k])
+    minEig <- min(eigen(pMat)$values)
+    dVal <- ifelse(minEig > 1e-8, minEig, abs(minEig) + 1e-8)
+    return(pMat + diag(dVal, p))
+  })
+
   # Initializing subject-level matrices
-  Omegas <- sapply(x, FUN = function(datf) {
-    mkSymm(glasso::glasso(cov(datf), rho = 0.001)$wi)}, simplify = "array")
+  Omegas <- sapply(1:K, simplify = "array", FUN = function(k) {
+    mkSymm(glasso::glasso(Sl[, , k], rho = 0.001, start = "warm", w.init = Sl[, , k], wi.init = iSl[, , k])$wi)
+    })
 
   # Initializing weights using hierarchical clustering based on dissimilarity matrix of
   # Frobenius norm of glasso matrix differences
@@ -161,7 +170,8 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
 
     for (k in 1:K) {
       diag(rhoMat[, , k]) <- 0
-      Omegas[, , k] <- mkSymm(glasso::glasso(sk[, , k], rho = rhoMat[, , k], penalize.diagonal = FALSE)$wi)
+      Omegas[, , k] <- mkSymm(glasso::glasso(sk[, , k], rho = rhoMat[, , k], penalize.diagonal = FALSE,
+                                             start = "warm", w.init = Sl[, , k], wi.init = iSl[, , k])$wi)
     }
 
     # 4th step: updating weights
