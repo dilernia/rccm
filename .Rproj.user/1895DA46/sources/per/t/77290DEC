@@ -4,16 +4,16 @@
     "created" : 1597954904498.000,
     "dirty" : false,
     "encoding" : "UTF-8",
-    "folds" : "37|25|39|2|\n123|35|127|4|\n129|20|142|4|\n147|20|152|4|\n153|43|155|32|\n166|49|167|70|\n185|43|187|32|\n189|31|191|4|\n",
-    "hash" : "1536727024",
+    "folds" : "34|105|204|0|\n37|25|39|2|\n65|18|69|2|\n71|21|73|2|\n79|18|83|2|\n102|31|110|4|\n123|35|127|4|\n129|20|142|4|\n147|20|152|4|\n153|43|155|32|\n185|43|187|32|\n189|31|191|4|\n",
+    "hash" : "2495185335",
     "id" : "77290DEC",
-    "lastKnownWriteTime" : 1602779487,
-    "last_content_update" : 1602779487887,
+    "lastKnownWriteTime" : 1603133694,
+    "last_content_update" : 1603133746351,
     "path" : "C:/Users/Owner/Dropbox/Minnesota/fMRI Research/rccm/R/rccm.R",
     "project_path" : "R/rccm.R",
     "properties" : {
-        "cursorPosition" : "59,25",
-        "scrollLine" : "45"
+        "cursorPosition" : "173,103",
+        "scrollLine" : "148"
     },
     "read_only" : false,
     "read_only_alternatives" : [

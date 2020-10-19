@@ -171,7 +171,7 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
     for (k in 1:K) {
       diag(rhoMat[, , k]) <- 0
       Omegas[, , k] <- mkSymm(glasso::glasso(sk[, , k], rho = rhoMat[, , k], penalize.diagonal = FALSE,
-                                             start = "warm", w.init = Sl[, , k], wi.init = iSl[, , k])$wi)
+                                             start = "warm", w.init = chol2inv(chol(Omegas.old[, , k])), wi.init = Omegas.old[, , k])$wi)
     }
 
     # 4th step: updating weights
