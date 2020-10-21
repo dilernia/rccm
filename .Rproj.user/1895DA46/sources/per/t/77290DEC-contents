@@ -32,7 +32,7 @@
 #' result <- rccm(x = myData$simDat, lambda1 = 10, lambda2 = 50, lambda3 = 2, nclusts = 2, delta = 0.001)
 #'
 #' @export
-rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.iters = 100, z0s = NULL) {
+rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.iters = 100, z0s = NULL, ncores = 1) {
 
   # Function for making almost symmetric matrix symmetric
   mkSymm <- function(x) {
@@ -95,6 +95,123 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
   wArray <- array(NA, dim = c(G, K, max.iters + 1))
   wArray[, , 1] <- wgk
 
+  if (ncores > 1) {
+    `%dopar%` <- foreach::`%dopar%`
+    cl <- parallel::makeCluster(ncores) # creates a cluster with <ncore> cores
+    doParallel::registerDoParallel(cl) # register the cluster
+
+    # Start BCD algorithm
+    while (max(abs(Omega0 - Omega0.old)) > delta |
+           max(abs(Omegas - Omegas.old)) > delta | counter < 1) {
+
+      # Exit if exceeds max.iters
+      if (counter >= max.iters) {
+        paste0("Omegas fail to converge for lambda1 =", lambda1, ", lambda2 =", lambda2, ", lambda3 =", lambda3,
+               ", delta =", deltas[counter - 1], "\n")
+
+        # Returning results
+        res <- list(Omega0, Omegas, wgk)
+        names(res) <- c("Omega0", "Omegas", "weights")
+        return(res)
+      }
+
+      # record current Omega0 & Omegas
+      Omega0.old <- Omega0
+      Omegas.old <- Omegas
+
+      # 1st step: Updating pi's
+      pigs <- 1 / K * rowSums(wgk)
+
+      # 2nd step: updating cluster-level precision matrices
+
+      # Calculating weighted-sum of subject-level matrices
+      inv0 <- array(0, c(p, p, G))
+      s0 <- sapply(1:G, function(g) {
+        wks <- sapply(1:K, function(k) {
+          wgk[g, k] * Omegas[, , k]}, simplify = "array")
+        return(apply(X = wks, MARGIN = c(1:2), FUN = sum))
+      }, simplify = "array")
+
+      resG <- foreach::foreach(g = 1:G) %dopar% {
+        S0 <- s0[, , g] / sum(wgk[g, ])
+        penMat <- matrix(lambda3 / (lambda2 * sum(wgk[g, ])), nrow = p, ncol = p)
+        diag(penMat) <- 0
+        if (counter > 1) {
+          invisible(capture.output(Omega0g <- spcov::spcov(Sigma = Omega0[, , g], S = S0, lambda = penMat,
+                                                                 tol.outer = delta, step.size = 100)$Sigma))
+        } else {
+          invisible(capture.output(Omega0g <- spcov::spcov(Sigma = solve(S0), S = S0, lambda = penMat,
+                                                                 tol.outer = delta, step.size = 100)$Sigma))
+        }
+        # Calculating inverse of Omega_g for Omega_k and w_gk updates
+        inv0g <- solve(Omega0g)
+
+        return(list(Omega0g, inv0g))
+      }
+
+      Omega0 <- sapply(1:G, simplify = "array", FUN = function(g) {resG[[g]][[1]]})
+      inv0 <- sapply(1:G, simplify = "array", FUN = function(g) {resG[[g]][[2]]})
+
+      # 2b step: updating weights
+
+      # Weight matrix where each row is for a cluster and each column for a subject
+      for (i in 1:G) {
+        det0 <- det(Omega0[, , i])
+        for (j in 1:K) {
+          wgk[i, j] <- log(pigs[i]) - lambda2 / 2 * sum(diag(inv0[, , i] %*% Omegas[, , j])) + (-lambda2 / 2) * (log(1 / lambda2^p) + log(det0))
+        }
+      }
+      wgk <- apply(wgk, 2, function(column) {
+        column <- exp(column - max(column))
+        return(column / sum(column))})
+
+      # 3rd step: updating subject-level precision matrices
+
+      sk <- sapply(1:K, function(k) {
+        # Calculating weighted-sum of cluster-level matrices
+        ws <- apply(X = sapply(1:G, function(g) {
+          wgk[g, k] * inv0[, , g]}, simplify = "array"), MARGIN = c(1:2), FUN = sum)
+        return((nks[k] * Sl[, , k] + lambda2 * ws) / (nks[k] + lambda2 - p - 1))
+      }, simplify = "array")
+
+      rhoMat <- sapply(X = 1:K, FUN = function(x) {
+        matrix(lambda1 / (nks[x] + lambda2 - p - 1), nrow = p, ncol = p)},
+        simplify = "array")
+
+      Omegas <- simplify2array(foreach::foreach(k = 1:K) %dopar% {
+        diag(rhoMat[, , k]) <- 0
+        Omegask <- mkSymm(glasso::glasso(sk[, , k], rho = rhoMat[, , k],
+                                               start = "warm", w.init = chol2inv(chol(Omegas.old[, , k])), wi.init = Omegas.old[, , k])$wi)
+        return(Omegask)
+        })
+
+      # 4th step: updating weights
+
+      # Weight matrix where each row is for a cluster and each column for a subject
+      for (i in 1:G) {
+        det0 <- det(Omega0[, , i])
+        for (j in 1:K) {
+          wgk[i, j] <- log(pigs[i]) - lambda2 / 2 * sum(diag(inv0[, , i] %*% Omegas[, , j])) + (-lambda2 / 2) * (log(1 / lambda2^p) + log(det0))
+        }
+      }
+      wgk <- apply(wgk, 2, function(column) {
+        column <- exp(column - max(column));
+        return(column / sum(column))})
+
+      if (sum(is.nan(wgk)) > 0) {
+        stop()
+      }
+
+      # Record BCD iterations
+      counter <- counter + 1
+
+      deltas <- c(deltas, max(abs(Omega0 - Omega0.old)), max(abs(Omegas - Omegas.old)))
+      wArray[, , counter + 1] <- wgk
+    }
+
+    parallel::stopCluster(cl)
+
+  } else {
   # Start BCD algorithm
   while (max(abs(Omega0 - Omega0.old)) > delta |
          max(abs(Omegas - Omegas.old)) > delta | counter < 1) {
@@ -170,7 +287,7 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
 
     for (k in 1:K) {
       diag(rhoMat[, , k]) <- 0
-      Omegas[, , k] <- mkSymm(glasso::glasso(sk[, , k], rho = rhoMat[, , k], penalize.diagonal = FALSE,
+      Omegas[, , k] <- mkSymm(glasso::glasso(sk[, , k], rho = rhoMat[, , k],
                                              start = "warm", w.init = chol2inv(chol(Omegas.old[, , k])), wi.init = Omegas.old[, , k])$wi)
     }
 
@@ -196,6 +313,7 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
 
     deltas <- c(deltas, max(abs(Omega0 - Omega0.old)), max(abs(Omegas - Omegas.old)))
     wArray[, , counter + 1] <- wgk
+  }
   }
 
   # Returning results
