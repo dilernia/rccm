@@ -47,17 +47,10 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
   Sl <- sapply(x, cov, simplify = "array")
   nks <- sapply(x, nrow)
 
-
-  iSl <- sapply(1:K, simplify = "array", FUN = function(k) {
-    pMat <- solve(Sl[, , k])
-    minEig <- min(eigen(pMat)$values)
-    dVal <- ifelse(minEig > 1e-8, minEig, abs(minEig) + 1e-8)
-    return(pMat + diag(dVal, p))
-  })
-
   # Initializing subject-level matrices
   Omegas <- sapply(1:K, simplify = "array", FUN = function(k) {
-    mkSymm(glasso::glasso(Sl[, , k], rho = 0.001, start = "warm", w.init = Sl[, , k], wi.init = iSl[, , k])$wi)
+    pdStart <- Sl[, , k] + diag(rep(1e-6, p))
+    mkSymm(glasso::glasso(pdStart, rho = 0.001, start = "warm", w.init = pdStart, wi.init = solve(pdStart))$wi)
     })
 
   # Initializing weights using hierarchical clustering based on dissimilarity matrix of
