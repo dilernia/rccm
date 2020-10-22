@@ -4,16 +4,16 @@
     "created" : 1597954904498.000,
     "dirty" : false,
     "encoding" : "UTF-8",
-    "folds" : "34|117|322|0|\n",
-    "hash" : "1328536237",
+    "folds" : "",
+    "hash" : "1827635512",
     "id" : "77290DEC",
-    "lastKnownWriteTime" : 1603313164,
-    "last_content_update" : 1603313164183,
+    "lastKnownWriteTime" : 1603406297,
+    "last_content_update" : 1603406297757,
     "path" : "C:/Users/Owner/Dropbox/Minnesota/fMRI Research/rccm/R/rccm.R",
     "project_path" : "R/rccm.R",
     "properties" : {
-        "cursorPosition" : "323,0",
-        "scrollLine" : "20"
+        "cursorPosition" : "55,4",
+        "scrollLine" : "46"
     },
     "read_only" : false,
     "read_only_alternatives" : [
