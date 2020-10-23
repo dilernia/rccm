@@ -174,8 +174,7 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
 
       Omegas <- simplify2array(parallel::mclapply(1:K, function(k){
         diag(rhoMat[, , k]) <- 0
-        Omegask <- mkSymm(glasso::glasso(sk[, , k], rho = rhoMat[, , k],
-                                               start = "warm", w.init = sk[, , k], wi.init = Omegas.old[, , k])$wi)
+        Omegask <- mkSymm(glasso::glasso(sk[, , k], rho = rhoMat[, , k])$wi)
         return(Omegask)
         }))
 
@@ -279,8 +278,7 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
 
     for (k in 1:K) {
       diag(rhoMat[, , k]) <- 0
-      Omegas[, , k] <- mkSymm(glasso::glasso(sk[, , k], rho = rhoMat[, , k],
-                                             start = "warm", w.init = sk[, , k], wi.init = Omegas.old[, , k])$wi)
+      Omegas[, , k] <- mkSymm(glasso::glasso(sk[, , k], rho = rhoMat[, , k])$wi)
     }
 
     # 4th step: updating weights
