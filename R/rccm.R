@@ -34,6 +34,11 @@
 #' @export
 rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.iters = 100, z0s = NULL, ncores = 1) {
 
+  if(Sys.info()[["sysname"]] == "Windows" & ncores > 1) {
+    ncores <- 1
+    warning("Parallel computation not availble for Windows OS. Running with single CPU.")
+  }
+
   # Function for making almost symmetric matrix symmetric
   mkSymm <- function(x) {
     return((x + t(x)) / 2)
@@ -89,10 +94,6 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
   wArray[, , 1] <- wgk
 
   if (ncores > 1) {
-    `%dopar%` <- foreach::`%dopar%`
-    cl <- parallel::makeCluster(ncores) # creates a cluster with <ncore> cores
-    doParallel::registerDoParallel(cl) # register the cluster
-
     # Start BCD algorithm
     while (max(abs(Omega0 - Omega0.old)) > delta |
            max(abs(Omegas - Omegas.old)) > delta | counter < 1) {
@@ -125,7 +126,7 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
         return(apply(X = wks, MARGIN = c(1:2), FUN = sum))
       }, simplify = "array")
 
-      resG <- foreach::foreach(g = 1:G) %dopar% {
+      resG <- parallel::mclapply(1:G, mc.cores = ncores, FUN = function(g) {
         S0 <- s0[, , g] / sum(wgk[g, ])
         penMat <- matrix(lambda3 / (lambda2 * sum(wgk[g, ])), nrow = p, ncol = p)
         diag(penMat) <- 0
@@ -140,7 +141,7 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
         inv0g <- solve(Omega0g)
 
         return(list(Omega0g, inv0g))
-      }
+      })
 
       Omega0 <- sapply(1:G, simplify = "array", FUN = function(g) {resG[[g]][[1]]})
       inv0 <- sapply(1:G, simplify = "array", FUN = function(g) {resG[[g]][[2]]})
@@ -171,12 +172,12 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
         matrix(lambda1 / (nks[x] + lambda2 - p - 1), nrow = p, ncol = p)},
         simplify = "array")
 
-      Omegas <- simplify2array(foreach::foreach(k = 1:K) %dopar% {
+      Omegas <- simplify2array(parallel::mclapply(1:K, function(k){
         diag(rhoMat[, , k]) <- 0
         Omegask <- mkSymm(glasso::glasso(sk[, , k], rho = rhoMat[, , k],
                                                start = "warm", w.init = sk[, , k], wi.init = Omegas.old[, , k])$wi)
         return(Omegask)
-        })
+        }))
 
       # 4th step: updating weights
 
@@ -201,8 +202,6 @@ rccm <- function(x, lambda1, lambda2, lambda3 = 0, nclusts, delta = 0.001, max.i
       deltas <- c(deltas, max(abs(Omega0 - Omega0.old)), max(abs(Omegas - Omegas.old)))
       wArray[, , counter + 1] <- wgk
     }
-
-    parallel::stopCluster(cl)
 
   } else {
   # Start BCD algorithm
