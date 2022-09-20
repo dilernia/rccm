@@ -4,8 +4,16 @@
 \alias{starsRccm}
 \title{Modified Stability Approach for Regularization Selection}
 \usage{
-starsRccm(datf, lambs, method = "RCCM", G = 2, N = 10, beta = 0.05,
-  z0s = NULL, ncores = NULL)
+starsRccm(
+  datf,
+  lambs,
+  method = "RCCM",
+  G = 2,
+  N = 10,
+  beta = 0.05,
+  z0s = NULL,
+  ncores = NULL
+)
 }
 \arguments{
 \item{datf}{List of \eqn{K} data sets each of dimension \eqn{n_k} x \eqn{p}.}

@@ -4,8 +4,7 @@
 \alias{randCov}
 \title{Random Covariance Model}
 \usage{
-randCov(x, lambda1, lambda2, lambda3 = 0, delta = 0.001,
-  max.iters = 100)
+randCov(x, lambda1, lambda2, lambda3 = 0, delta = 0.001, max.iters = 100)
 }
 \arguments{
 \item{x}{List of \eqn{K} data matrices each of dimension \eqn{n_k} x \eqn{p}.}
